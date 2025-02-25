@@ -1,12 +1,11 @@
 const express = require("express");
 const adminController = require("../controllers/adminController.js");
+const commonController = require("../controllers/commonController.js");
 const {
   isAuthenticatedUser,
   authorizeRoles,
 } = require("../middleware/auth.js");
 const router = express.Router();
-
-console.log("routes");
 
 router.post(
   "/addUser",
@@ -36,6 +35,27 @@ router
     isAuthenticatedUser,
     authorizeRoles("admin"),
     adminController.getDesignations
+  );
+
+router
+  .route("/contact")
+  .post(
+    isAuthenticatedUser,
+    authorizeRoles("admin"),
+    commonController.addContact
+  );
+
+router
+  .route("/team")
+  .post(
+    isAuthenticatedUser,
+    authorizeRoles("admin"),
+    adminController.createTeam
+  )
+  .delete(
+    isAuthenticatedUser,
+    authorizeRoles("admin"),
+    adminController.deleteTeam
   );
 
 module.exports = router;

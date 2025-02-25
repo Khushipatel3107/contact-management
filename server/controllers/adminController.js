@@ -1,4 +1,5 @@
 const userModel = require("../models/users");
+const teamModel = require("../models/teams");
 const { CustomHttpError } = require("../utils/customError");
 const catchAsyncErrors = require("../middleware/catchAsyncError");
 const designationModel = require("../models/designations");
@@ -11,7 +12,6 @@ const registerUser = catchAsyncError(async (req, res, next) => {
   if (user) {
     return next(new CustomHttpError(400, "User with this mail already exsts"));
   }
-  // const password = randomBytes(5).toString("hex");
   const newUser = new userModel({ email, fullname, permissions, designations });
   await newUser.save();
   const link = `http://localhost:3000/setPassword?user=${newUser._id}`;
@@ -45,8 +45,27 @@ const addDesignation = catchAsyncErrors(async (req, res, next) => {
 const editDesignation = catchAsyncError(async (req, res, next) => {
   const { name, permissions, designationId } = req.body;
   const designation = await designationModel.findById(designationId);
+  const users = await userModel.find({
+    designations: designationId,
+  });
+
+  for (const user of users) {
+    designation.permissions.forEach((per) => {
+      const index = user.permissions.indexOf(per);
+      if (index !== -1) {
+        user.permissions.splice(index, 1);
+      }
+    });
+  }
   designation.name = name;
   designation.permissions = permissions;
+  for (const user of users) {
+    permissions.forEach((per) => {
+      user.permissions.push(per);
+    });
+    await user.save();
+  }
+
   await designation.save();
   res.status(200).json({
     success: true,
@@ -57,6 +76,18 @@ const deleteDesignation = catchAsyncError(async (req, res, next) => {
   const { designationId } = req.body;
   const designation = await designationModel.findById(designationId);
   designation.is_active = 0;
+  const users = await userModel.find({
+    designations: designationId,
+  });
+  for (const user of users) {
+    designation.permissions.forEach(async (per) => {
+      const index = user.permissions.indexOf(per);
+      if (index !== -1) {
+        user.permissions.splice(index, 1);
+        await user.save();
+      }
+    });
+  }
   await designation.save();
   res.status(200).json({
     success: true,
@@ -64,10 +95,42 @@ const deleteDesignation = catchAsyncError(async (req, res, next) => {
 });
 
 const getDesignations = catchAsyncError(async (req, res, next) => {
-  const designations = await designationModel.find({ is_active: 1 });
+  const designations = await designationModel.fin({ is_active: 1 });
   res.status(200).json({
     success: true,
     data: designations,
+  });
+});
+
+const createTeam = catchAsyncError(async (req, res, next) => {
+  const { name, members, permissions } = req.body;
+  const teams = await teamModel.find({ name, is_active: 1 });
+  if (teams.length) {
+    return next(new CustomHttpError(400, "Team already exists"));
+  }
+  const team = new teamModel({
+    name,
+    createdBy: req.user._id,
+    members,
+    permissions,
+  });
+  await team.save();
+  res.status(200).json({
+    success: true,
+    data: team,
+  });
+});
+
+const deleteTeam = catchAsyncError(async (req, res, next) => {
+  const { teamId } = req.body;
+  const team = await teamModel.findById(teamId);
+  if (!team) {
+    return next(new CustomHttpError(400, "Team does not exists"));
+  }
+  team.is_active = 0;
+  await team.save();
+  res.status(200).json({
+    success: true,
   });
 });
 
@@ -77,4 +140,6 @@ module.exports = {
   editDesignation,
   deleteDesignation,
   getDesignations,
+  createTeam,
+  deleteTeam,
 };
