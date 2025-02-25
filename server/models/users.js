@@ -9,8 +9,12 @@ const userSchema = new mongoose.Schema(
     email: { type: String, trim: true, unique: true },
     password: { type: String, select: false },
     is_active: { type: Number, default: 1 },
+    is_approved: { type: Number, default: 0 },
     role: { type: String, default: "user" },
-    designation: { type: mongoose.SchemaTypes.ObjectId, ref: "designations" },
+    designations: [
+      { type: mongoose.SchemaTypes.ObjectId, ref: "designations" },
+    ],
+    permissions: [String],
   },
   { timestamps: true }
 );

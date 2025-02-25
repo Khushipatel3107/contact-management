@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const designationSchema = new mongoose.Schema(
   {
     name: String,
+    permissions: [String],
     is_active: { type: Number, default: 1 },
   },
   { timestamps: true }
