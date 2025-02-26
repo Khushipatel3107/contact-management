@@ -46,15 +46,58 @@ const addContact = catchAsyncError(async (req, res, next) => {
 
 const editContact = catchAsyncError(async (req, res, next) => {
   if (
-    req.user.role != "admin" ||
+    req.user.role != "admin" &&
     !req.user.permissions.includes("EDIT_CONTACT")
   ) {
     return next(
       new CustomHttpError(401, "User does not have permission to edit contact")
     );
   }
+  const { name, email, contactNumber, contactId } = req.body;
+  const contact = await contactModel.findById(contactId);
+  if (!contact) {
+    new CustomHttpError(401, "Contact does not exists");
+  }
+  contact.name = name;
+  contact.email = email;
+  contact.contactNumber = contactNumber;
+  await contact.save();
+  res.status(200).json({
+    success: true,
+    data: contact,
+  });
 });
+
+const deleteContact = catchAsyncError(async (req, res, next) => {
+  if (
+    req.user.role != "admin" &&
+    !req.user.permissions.includes("DELETE_CONTACT")
+  ) {
+    return next(
+      new CustomHttpError(
+        401,
+        "User does not have permission to delete contact"
+      )
+    );
+  }
+  console.log("hi");
+  const { contactId } = req.body;
+  const contact = await contactModel.findById(contactId);
+  if (!contact) {
+    new CustomHttpError(401, "User does not have permission to delete contact");
+  }
+  contact.is_active = 0;
+  console.log(contact);
+  await contact.save({ validateBeforeSave: false });
+
+  res.status(200).json({
+    success: true,
+  });
+});
+
 module.exports = {
   login,
   addContact,
+  editContact,
+  deleteContact,
 };

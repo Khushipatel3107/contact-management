@@ -95,7 +95,7 @@ const deleteDesignation = catchAsyncError(async (req, res, next) => {
 });
 
 const getDesignations = catchAsyncError(async (req, res, next) => {
-  const designations = await designationModel.fin({ is_active: 1 });
+  const designations = await designationModel.find({ is_active: 1 });
   res.status(200).json({
     success: true,
     data: designations,
@@ -114,6 +114,18 @@ const createTeam = catchAsyncError(async (req, res, next) => {
     members,
     permissions,
   });
+  for (const person of members) {
+    let user = await userModel.findById(person);
+    if (!user) {
+      return next(new CustomHttpError(400, "User does not exist"));
+    }
+    for (const permission of permissions) {
+      user.permissions.push(permission);
+    }
+    user.teams.push(team._id);
+    await user.save();
+  }
+
   await team.save();
   res.status(200).json({
     success: true,
@@ -122,12 +134,67 @@ const createTeam = catchAsyncError(async (req, res, next) => {
 });
 
 const deleteTeam = catchAsyncError(async (req, res, next) => {
+  if (
+    req.user.role != "admin" &&
+    !req.user.permissions.includes("CREATE_TEAM")
+  ) {
+    return next(
+      new CustomHttpError(401, "User does not have permissions to create team")
+    );
+  }
   const { teamId } = req.body;
   const team = await teamModel.findById(teamId);
   if (!team) {
     return next(new CustomHttpError(400, "Team does not exists"));
   }
+  let users = await userModel.find({ teams: teamId });
+  for (let user of users) {
+    for (let permission of team.permissions) {
+      let index = user.permissions.indexOf(permission);
+      if (index !== -1) {
+        user.permissions.splice(index, 1);
+      }
+    }
+    await user.save();
+  }
   team.is_active = 0;
+  await team.save();
+  res.status(200).json({
+    success: true,
+  });
+});
+
+const editTeam = catchAsyncError(async (req, res, next) => {
+  const { teamId, name, permissions, members } = req.body;
+  const users = await userModel.find({ teams: teamId });
+  const team = await teamModel.findById(teamId);
+  for (let user of users) {
+    const teamIndex = user.teams.indexOf(teamId);
+    if (teamIndex !== -1) {
+      user.teams.splice(teamIndex, 1);
+    }
+    for (let permission of team.permissions) {
+      let index = user.permissions.indexOf(permission);
+      if (index !== -1) {
+        user.permissions.splice(index, 1);
+      }
+    }
+    await user.save();
+  }
+  for (let personId of members) {
+    let user = await userModel.findById(personId);
+    if (!user) {
+      return next(new CustomHttpError(400, "User does not exist"));
+    }
+    for (const permission of permissions) {
+      user.permissions.push(permission);
+    }
+    user.teams.push(teamId);
+    await user.save();
+  }
+  team.name = name;
+  team.permissions = permissions;
+  team.members = members;
   await team.save();
   res.status(200).json({
     success: true,
@@ -142,4 +209,5 @@ module.exports = {
   getDesignations,
   createTeam,
   deleteTeam,
+  editTeam,
 };

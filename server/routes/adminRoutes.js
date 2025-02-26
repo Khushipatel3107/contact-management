@@ -43,6 +43,11 @@ router
     isAuthenticatedUser,
     authorizeRoles("admin"),
     commonController.addContact
+  )
+  .put(
+    isAuthenticatedUser,
+    authorizeRoles("admin"),
+    commonController.editContact
   );
 
 router
@@ -56,6 +61,7 @@ router
     isAuthenticatedUser,
     authorizeRoles("admin"),
     adminController.deleteTeam
-  );
+  )
+  .put(isAuthenticatedUser, authorizeRoles("teams"), adminController.editTeam);
 
 module.exports = router;

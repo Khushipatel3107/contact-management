@@ -14,6 +14,15 @@ router
     isAuthenticatedUser,
     authorizeRoles("user"),
     commonController.addContact
+  )
+  .put(
+    isAuthenticatedUser,
+    authorizeRoles("user"),
+    commonController.editContact
+  )
+  .delete(
+    isAuthenticatedUser,
+    authorizeRoles("user"),
+    commonController.deleteContact
   );
 module.exports = router;
-//

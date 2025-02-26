@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema(
       { type: mongoose.SchemaTypes.ObjectId, ref: "designations" },
     ],
     permissions: [String],
+    teams: [{ type: mongoose.SchemaTypes.ObjectId, ref: "teams" }],
   },
   { timestamps: true }
 );
