@@ -4,9 +4,11 @@ const commonController = require("../controllers/commonController.js");
 const {
   isAuthenticatedUser,
   authorizeRoles,
+  verify,
 } = require("../middleware/auth.js");
 const router = express.Router();
 
+router.get("/verify", isAuthenticatedUser, authorizeRoles("user"), verify);
 router.post("/completeSignup", userController.completeSignup);
 router
   .route("/contact")

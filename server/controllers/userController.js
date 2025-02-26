@@ -19,8 +19,6 @@ const completeSignup = catchAsyncError(async (req, res, next) => {
   let newPermissions = [];
   for (const ele of user.designations) {
     const role = await designationModel.findById(ele);
-    console.log(role);
-    console.log(role.permissions);
     role.permissions.forEach((permission) => {
       newPermissions.push(permission);
     });
