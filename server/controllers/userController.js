@@ -9,7 +9,7 @@ const completeSignup = catchAsyncError(async (req, res, next) => {
       new CustomHttpError(400, "Confirm password and password does not match")
     );
   }
-  const user = await userModel.findOne({ email });
+  const user = await userModel.findOne({ email, is_approved: 0 });
   if (!user) {
     return next(new CustomHttpError(400, "You cannot complete your profile"));
   }

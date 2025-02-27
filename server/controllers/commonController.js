@@ -33,7 +33,7 @@ const addContact = catchAsyncError(async (req, res, next) => {
   const { name, email, contactNumber } = req.body;
 
   const contact = await contactModel.find({ contactNumber });
-  if (contact.length) {
+  if (!contact) {
     return next(new CustomHttpError(401, "Contact already exists"));
   }
   const newContact = new contactModel({ name, email, contactNumber });
@@ -68,6 +68,11 @@ const editContact = catchAsyncError(async (req, res, next) => {
   });
 });
 
+const getContacts = catchAsyncError(async (req, res, next) => {
+  const contacts = await contactModel.find({ is_active: 1 });
+  res.status(200).json({ success: true, data: contacts });
+});
+
 const deleteContact = catchAsyncError(async (req, res, next) => {
   if (
     req.user.role != "admin" &&
@@ -98,4 +103,5 @@ module.exports = {
   addContact,
   editContact,
   deleteContact,
+  getContacts,
 };

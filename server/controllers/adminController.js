@@ -7,12 +7,30 @@ const { sendEmail } = require("../utils/sendMail");
 const catchAsyncError = require("../middleware/catchAsyncError");
 
 const registerUser = catchAsyncError(async (req, res, next) => {
-  const { email, fullname, permissions, designations } = req.body;
-  const user = await userModel.findOne({ email });
+  const { email, fullname, permissions, designations, teams } = req.body;
+  const user = await userModel.findOne({ email, is_approved: 1, is_active: 1 });
   if (user) {
     return next(new CustomHttpError(400, "User with this mail already exsts"));
   }
-  const newUser = new userModel({ email, fullname, permissions, designations });
+  const newUser = new userModel({
+    email,
+    fullname,
+    permissions,
+    designations,
+    teams,
+  });
+  for (const designationId of designations) {
+    let designation = await designationModel.findById(designationId);
+    for (const permission of designation.permissions) {
+      newUser.permissions.push(permission);
+    }
+  }
+  for (const teamId of teams) {
+    let team = await teamModel.findById(teamId);
+    for (const permission of team.permissions) {
+      newUser.permissions.push(permission);
+    }
+  }
   await newUser.save();
   const link = `http://localhost:3000/setPassword?user=${newUser._id}`;
   const message = `Please set your password by clicking upon this link: \n\n ${link}`;
@@ -27,13 +45,94 @@ const registerUser = catchAsyncError(async (req, res, next) => {
   });
 });
 
+const getUsers = catchAsyncError(async (req, res, next) => {
+  const users = await userModel
+    .find({
+      is_active: 1,
+      is_approved: 1,
+      _id: { $ne: req.user._id },
+    })
+    .populate("designations")
+    .populate("teams");
+  res.status(200).json({ success: true, data: users });
+});
+
+const editUser = catchAsyncError(async (req, res, next) => {
+  const { permissions = [], designations, fullname, teams = [] } = req.body;
+  if (!fullname) {
+    return next(new CustomHttpError(400, "Give fullname of user"));
+  }
+  if (!designations?.length) {
+    return next(new CustomHttpError(400, "Assign a designation to user"));
+  }
+  const { userId } = req.params;
+  const user = await userModel.findById(userId);
+  if (!user) {
+    return next(new CustomHttpError(400, "User does not exist"));
+  }
+  for (const teamId of user.teams) {
+    let team = await teamModel.findById(teamId);
+    if (team?.permissions) {
+      for (const permission of team?.permissions) {
+        const index = user?.permissions.indexOf(permission);
+        if (index !== -1) {
+          user.permissions.splice(index, 1);
+        }
+      }
+    }
+  }
+
+  for (const designationId of user?.designations) {
+    let designation = await designationModel.findById(designationId);
+    if (designation.permissions) {
+      for (const permission of designation.permissions) {
+        const index = user.permissions.indexOf(permission);
+        if (index !== -1) {
+          user.permissions.splice(index, 1);
+        }
+      }
+    }
+  }
+  user.teams = teams;
+  user.permissions = permissions;
+  user.designations = designations;
+  user.fullname = fullname;
+  if (designations?.length) {
+    for (const designationId of designations) {
+      let designation = await designationModel.findById(designationId);
+      for (const permission of designation?.permissions) {
+        user.permissions.push(permission);
+      }
+    }
+  }
+
+  if (teams?.length) {
+    for (const teamId of teams) {
+      let team = await teamModel.findById(teamId);
+      for (const permission of team?.permissions) {
+        user.permissions.push(permission);
+      }
+    }
+  }
+  await user.save();
+  res.status(200).json({
+    success: true,
+  });
+});
+
 const addDesignation = catchAsyncErrors(async (req, res, next) => {
   const { name, permissions } = req.body;
   if (!name) {
     return next(new CustomHttpError(400, "Please write designation"));
   }
-  if (permissions.length <= 0) {
+  if (!permissions?.length) {
     return next(new CustomHttpError(400, "Please write permissions"));
+  }
+  const existingDesignation = await designationModel.findOne({ name });
+  if (existingDesignation) {
+    return next(
+      new CustomHttpError(400, "Designation with this name already exists")
+    );
   }
   const des = new designationModel({ name, permissions });
   await des.save();
@@ -45,6 +144,9 @@ const addDesignation = catchAsyncErrors(async (req, res, next) => {
 const editDesignation = catchAsyncError(async (req, res, next) => {
   const { name, permissions, designationId } = req.body;
   const designation = await designationModel.findById(designationId);
+  if (!designation) {
+    return next(new CustomHttpError(400, "Designation does not exist"));
+  }
   const users = await userModel.find({
     designations: designationId,
   });
@@ -75,18 +177,26 @@ const editDesignation = catchAsyncError(async (req, res, next) => {
 const deleteDesignation = catchAsyncError(async (req, res, next) => {
   const { designationId } = req.body;
   const designation = await designationModel.findById(designationId);
+  if (!designation) {
+    return next(new CustomHttpError(400, "Designation does not exist"));
+  }
   designation.is_active = 0;
   const users = await userModel.find({
     designations: designationId,
   });
   for (const user of users) {
-    designation.permissions.forEach(async (per) => {
+    const designationIndex = user.designations.indexOf(designationId);
+    if (designationIndex != -1) {
+      user.designations.splice(designationId, 1);
+    }
+
+    for (const per of designation.permissions) {
       const index = user.permissions.indexOf(per);
       if (index !== -1) {
         user.permissions.splice(index, 1);
-        await user.save();
       }
-    });
+    }
+    await user.save();
   }
   await designation.save();
   res.status(200).json({
@@ -104,11 +214,11 @@ const getDesignations = catchAsyncError(async (req, res, next) => {
 
 const createTeam = catchAsyncError(async (req, res, next) => {
   const { name, members, permissions } = req.body;
-  const teams = await teamModel.find({ name, is_active: 1 });
-  if (teams.length) {
+  const team = await teamModel.find({ name, is_active: 1 });
+  if (team.length) {
     return next(new CustomHttpError(400, "Team already exists"));
   }
-  const team = new teamModel({
+  const newTeam = new teamModel({
     name,
     createdBy: req.user._id,
     members,
@@ -122,14 +232,13 @@ const createTeam = catchAsyncError(async (req, res, next) => {
     for (const permission of permissions) {
       user.permissions.push(permission);
     }
-    user.teams.push(team._id);
+    user.teams.push(newTeam._id);
     await user.save();
   }
-
-  await team.save();
+  await newTeam.save();
   res.status(200).json({
     success: true,
-    data: team,
+    data: newTeam,
   });
 });
 
@@ -166,8 +275,14 @@ const deleteTeam = catchAsyncError(async (req, res, next) => {
 
 const editTeam = catchAsyncError(async (req, res, next) => {
   const { teamId, name, permissions, members } = req.body;
+  if (!name || !permissions?.length || !members?.length) {
+    return next(new CustomHttpError(400, "Please enter valid input"));
+  }
   const users = await userModel.find({ teams: teamId });
   const team = await teamModel.findById(teamId);
+  if (!team) {
+    return next(new CustomHttpError(400, "No team exists"));
+  }
   for (let user of users) {
     const teamIndex = user.teams.indexOf(teamId);
     if (teamIndex !== -1) {
@@ -204,6 +319,8 @@ const editTeam = catchAsyncError(async (req, res, next) => {
 module.exports = {
   addDesignation,
   registerUser,
+  getUsers,
+  editUser,
   editDesignation,
   deleteDesignation,
   getDesignations,

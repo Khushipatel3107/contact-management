@@ -16,6 +16,19 @@ router.post(
   authorizeRoles("admin"),
   adminController.registerUser
 );
+router.get(
+  "/users",
+  isAuthenticatedUser,
+  authorizeRoles("admin"),
+  adminController.getUsers
+);
+
+router.put(
+  "/user/:userId",
+  isAuthenticatedUser,
+  authorizeRoles("admin"),
+  adminController.editUser
+);
 
 router
   .route("/designation")
@@ -65,6 +78,6 @@ router
     authorizeRoles("admin"),
     adminController.deleteTeam
   )
-  .put(isAuthenticatedUser, authorizeRoles("teams"), adminController.editTeam);
+  .put(isAuthenticatedUser, authorizeRoles("admin"), adminController.editTeam);
 
 module.exports = router;

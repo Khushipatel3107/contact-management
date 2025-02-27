@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 const designationSchema = new mongoose.Schema(
   {
-    name: String,
-    permissions: [String],
+    name: { type: String, trim: true, unique: true, require: true },
+    permissions: { type: [String], default: [] },
     is_active: { type: Number, default: 1 },
   },
   { timestamps: true }
