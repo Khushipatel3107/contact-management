@@ -78,6 +78,7 @@ router
     authorizeRoles("admin"),
     adminController.deleteTeam
   )
-  .put(isAuthenticatedUser, authorizeRoles("admin"), adminController.editTeam);
+  .put(isAuthenticatedUser, authorizeRoles("admin"), adminController.editTeam)
+  .get(isAuthenticatedUser, authorizeRoles("admin"), adminController.getTeams);
 
 module.exports = router;

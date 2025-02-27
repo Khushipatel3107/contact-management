@@ -20,21 +20,23 @@ const EditUserModal = ({
     designationIds: [],
     permissions: [],
   });
-  const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // This effect will reset the form data when the modal opens for adding or editing
   useEffect(() => {
     if (user) {
-      setIsEditMode(true);
+      // For edit mode, pre-fill the data
       setFormData({
         fullname: user.fullname,
         email: user.email,
-        teamIds: user.teamIds || [],
-        designationIds: user.designationIds || [],
+        teamIds: user.teams ? user.teams.map((team) => team._id) : [],
+        designationIds: user.designations
+          ? user.designations.map((designation) => designation._id)
+          : [],
         permissions: user.permissions || [],
       });
     } else {
-      setIsEditMode(false);
+      // For add mode, reset the form data
       setFormData({
         fullname: "",
         email: "",
@@ -47,18 +49,28 @@ const EditUserModal = ({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    if (name === "permissions") {
+      const permissionsArray = Array.isArray(value)
+        ? value
+        : value.split(",").map((item) => item.trim());
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: permissionsArray,
+      }));
+    } else {
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async () => {
-    const url = isEditMode
-      ? `${apiUrl}/api/v1/users/update/${user._id}`
-      : `${apiUrl}/api/v1/users/create`;
+    const url = user
+      ? `${apiUrl}/api/v1/users/update/${user._id}` // For Edit
+      : `${apiUrl}/api/v1/users/create`; // For Add
 
-    const method = isEditMode ? "PUT" : "POST";
+    const method = user ? "PUT" : "POST";
 
     const payload = {
       fullname: formData.fullname,
@@ -69,6 +81,7 @@ const EditUserModal = ({
     };
 
     try {
+      setLoading(true);
       const response = await fetch(url, {
         method: method,
         headers: {
@@ -80,19 +93,21 @@ const EditUserModal = ({
       const data = await response.json();
 
       if (data.success) {
-        saveUser(data.user);
-        onClose();
+        saveUser(data.user); // Callback to save updated user list
+        onClose(); // Close modal after success
       } else {
         alert(data.message || "Something went wrong");
       }
     } catch (error) {
       alert("Failed to save user");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Dialog
-      header={isEditMode ? "Edit User" : "Add New User"}
+      header={user ? "Edit User" : "Add New User"}
       visible={show}
       onHide={onClose}
       footer={
@@ -132,7 +147,7 @@ const EditUserModal = ({
             name="email"
             value={formData.email}
             onChange={handleChange}
-            disabled={isEditMode}
+            disabled={!!user} // Disable email input if editing
           />
         </div>
 

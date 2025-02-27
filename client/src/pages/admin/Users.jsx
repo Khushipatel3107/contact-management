@@ -47,7 +47,7 @@ const Users = () => {
               ? ele.designations
                   .map((designation) => designation.name)
                   .join(", ")
-              : "-", // Show "-" if no designations
+              : "-",
             teamNames: ele.teams.length
               ? ele.teams.map((team) => team.name).join(", ")
               : "-", // Show "-" if no teams
