@@ -3,16 +3,17 @@ import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { MultiSelect } from "primereact/multiselect";
 import { InputText } from "primereact/inputtext";
-import { InputTextarea } from "primereact/inputtextarea";
+const apiUrl = import.meta.env.VITE_API_URL;
 
 const EditUserModal = ({
   show,
   user,
   onClose,
+  getUsers,
   availableDesignations = [],
   availableTeams = [],
-  saveUser,
 }) => {
+  const token = localStorage.getItem("token");
   const [formData, setFormData] = useState({
     fullname: "",
     email: "",
@@ -22,10 +23,8 @@ const EditUserModal = ({
   });
   const [loading, setLoading] = useState(false);
 
-  // This effect will reset the form data when the modal opens for adding or editing
   useEffect(() => {
     if (user) {
-      // For edit mode, pre-fill the data
       setFormData({
         fullname: user.fullname,
         email: user.email,
@@ -36,7 +35,6 @@ const EditUserModal = ({
         permissions: user.permissions || [],
       });
     } else {
-      // For add mode, reset the form data
       setFormData({
         fullname: "",
         email: "",
@@ -64,19 +62,24 @@ const EditUserModal = ({
       }));
     }
   };
+  const permissionsOptions = [
+    { label: "Create Contact", value: "CREATE_CONTACT" },
+    { label: "Edit Contact", value: "EDIT_CONTACT" },
+    { label: "Delete Contact", value: "DELETE_CONTACT" },
+  ];
 
   const handleSubmit = async () => {
     const url = user
-      ? `${apiUrl}/api/v1/users/update/${user._id}` // For Edit
-      : `${apiUrl}/api/v1/users/create`; // For Add
+      ? `${apiUrl}/api/v1/admin/user/${user._id}`
+      : `${apiUrl}/api/v1/admin/addUser`;
 
     const method = user ? "PUT" : "POST";
 
     const payload = {
       fullname: formData.fullname,
       email: formData.email,
-      teamIds: formData.teamIds,
-      designationIds: formData.designationIds,
+      teams: formData.teamIds,
+      designations: formData.designationIds,
       permissions: formData.permissions,
     };
 
@@ -86,6 +89,7 @@ const EditUserModal = ({
         method: method,
         headers: {
           "Content-Type": "application/json",
+          token,
         },
         body: JSON.stringify(payload),
       });
@@ -93,13 +97,13 @@ const EditUserModal = ({
       const data = await response.json();
 
       if (data.success) {
-        saveUser(data.user); // Callback to save updated user list
-        onClose(); // Close modal after success
+        onClose();
+        getUsers();
       } else {
-        alert(data.message || "Something went wrong");
+        setError(data.message || "Something went wrong");
       }
     } catch (error) {
-      alert("Failed to save user");
+      setError("Failed to save user");
     } finally {
       setLoading(false);
     }
@@ -111,7 +115,7 @@ const EditUserModal = ({
       visible={show}
       onHide={onClose}
       footer={
-        <div>
+        <div className="space-x-5">
           <Button
             label="Cancel"
             icon="pi pi-times"
@@ -123,15 +127,18 @@ const EditUserModal = ({
             icon="pi pi-check"
             onClick={handleSubmit}
             loading={loading}
+            className="p-button-primary"
           />
         </div>
       }
+      className="w-[40%]"
     >
-      <div>
+      <div className="space-y-4 ">
         <div className="p-field">
           <label htmlFor="fullname">Full Name</label>
           <InputText
             id="fullname"
+            className="w-full"
             name="fullname"
             value={formData.fullname}
             onChange={handleChange}
@@ -143,17 +150,19 @@ const EditUserModal = ({
         <div className="p-field">
           <label htmlFor="email">Email</label>
           <InputText
+            className="w-full"
             id="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            disabled={!!user} // Disable email input if editing
+            disabled={!!user}
           />
         </div>
 
         <div className="p-field">
           <label htmlFor="teams">Teams</label>
           <MultiSelect
+            className="w-full"
             id="teams"
             name="teamIds"
             value={formData.teamIds}
@@ -168,6 +177,7 @@ const EditUserModal = ({
         <div className="p-field">
           <label htmlFor="designations">Designations</label>
           <MultiSelect
+            className="w-full"
             id="designations"
             name="designationIds"
             value={formData.designationIds}
@@ -181,13 +191,16 @@ const EditUserModal = ({
 
         <div className="p-field">
           <label htmlFor="permissions">Permissions</label>
-          <InputTextarea
+          <MultiSelect
             id="permissions"
             name="permissions"
-            value={formData.permissions.join(", ")}
+            value={formData.permissions}
+            options={permissionsOptions}
+            optionLabel="label"
+            optionValue="value"
             onChange={handleChange}
-            rows={5}
-            placeholder="Enter permissions (comma separated)"
+            placeholder="Select Permissions"
+            className="w-full"
           />
         </div>
       </div>

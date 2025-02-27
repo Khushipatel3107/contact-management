@@ -7,10 +7,19 @@ const { sendEmail } = require("../utils/sendMail");
 const catchAsyncError = require("../middleware/catchAsyncError");
 
 const registerUser = catchAsyncError(async (req, res, next) => {
-  const { email, fullname, permissions, designations, teams } = req.body;
+  const {
+    email,
+    fullname,
+    permissions = [],
+    designations = [],
+    teams = [],
+  } = req.body;
   const user = await userModel.findOne({ email, is_approved: 1, is_active: 1 });
   if (user) {
     return next(new CustomHttpError(400, "User with this mail already exsts"));
+  }
+  if (!email || !fullname) {
+    return next(new CustomHttpError(400, "Enter valid inputs"));
   }
   const newUser = new userModel({
     email,
@@ -49,7 +58,6 @@ const getUsers = catchAsyncError(async (req, res, next) => {
   const users = await userModel
     .find({
       is_active: 1,
-      is_approved: 1,
       _id: { $ne: req.user._id },
     })
     .populate("designations")
@@ -105,7 +113,6 @@ const editUser = catchAsyncError(async (req, res, next) => {
       }
     }
   }
-
   if (teams?.length) {
     for (const teamId of teams) {
       let team = await teamModel.findById(teamId);
@@ -118,6 +125,17 @@ const editUser = catchAsyncError(async (req, res, next) => {
   res.status(200).json({
     success: true,
   });
+});
+
+const deleteUser = catchAsyncError(async (req, res, next) => {
+  const { userId } = req.params;
+  let user = await userModel.findById(userId);
+  if (!user) {
+    return next(new CustomHttpError(400, "User does not exists"));
+  }
+  user.is_active = 0;
+  await user.save();
+  res.status(200).json({ success: true });
 });
 
 const addDesignation = catchAsyncErrors(async (req, res, next) => {
@@ -333,4 +351,5 @@ module.exports = {
   deleteTeam,
   editTeam,
   getTeams,
+  deleteUser,
 };

@@ -23,6 +23,13 @@ router.get(
   adminController.getUsers
 );
 
+router.delete(
+  "/user/:userId",
+  isAuthenticatedUser,
+  authorizeRoles("admin"),
+  adminController.deleteUser
+);
+
 router.put(
   "/user/:userId",
   isAuthenticatedUser,

@@ -20,31 +20,28 @@ const AdminDashboard = () => {
             </li>
             <li>
               <Link
-                to="/dashboard/users"
+                to="designations"
                 className="hover:bg-gray-700 p-2 block rounded"
               >
-                Home
+                Designations
+              </Link>
+            </li>
+            <li>
+              <Link to="teams" className="hover:bg-gray-700 p-2 block rounded">
+                Teams
               </Link>
             </li>
             <li>
               <Link
-                to="/dashboard/settings"
+                to="contacts"
                 className="hover:bg-gray-700 p-2 block rounded"
               >
-                Settings
+                Contacts
               </Link>
             </li>
             <li>
               <Link
-                to="/dashboard/reports"
-                className="hover:bg-gray-700 p-2 block rounded"
-              >
-                Reports
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/dashboard/logout"
+                onClick={() => localStorage.clear()}
                 className="hover:bg-gray-700 p-2 block rounded"
               >
                 Logout

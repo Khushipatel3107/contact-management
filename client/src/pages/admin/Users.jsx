@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { ConfirmationDialog } from "../../components/admin/ConfirmationDialog"; // Import the Delete Confirmation Modal
+import { ConfirmationDialog } from "../../components/admin/ConfirmationDialog";
 import EditUserModal from "../../components/admin/EditUserModal";
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -23,6 +23,7 @@ const Users = () => {
   const [availableTeams, setAvailableTeams] = useState([]);
   const [availableDesignations, setAvailableDesignations] = useState([]);
 
+  // Function to fetch users
   const getUsers = async () => {
     const url = `${apiUrl}/api/v1/${role}/users`;
     setLoading(true);
@@ -50,8 +51,12 @@ const Users = () => {
               : "-",
             teamNames: ele.teams.length
               ? ele.teams.map((team) => team.name).join(", ")
-              : "-", // Show "-" if no teams
-            permissions: ele.permissions || "-", // Show permissions
+              : "-",
+            permissions: ele.permissions || "-",
+            permissionNames:
+              ele.permissions && Array.isArray(ele.permissions)
+                ? Array.from(new Set(ele.permissions)).join(", ")
+                : "-",
           }))
         );
       } else {
@@ -63,8 +68,50 @@ const Users = () => {
     }
   };
 
+  const getTeams = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/v1/${role}/team`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          token: token,
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAvailableTeams(data.data);
+      } else {
+        setError("Failed to fetch teams");
+      }
+    } catch (error) {
+      setError("Failed to fetch teams");
+    }
+  };
+
+  const getDesignations = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/v1/${role}/designation`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          token: token,
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAvailableDesignations(data.data);
+      } else {
+        setError("Failed to fetch designations");
+      }
+    } catch (error) {
+      setError("Failed to fetch designations");
+    }
+  };
+
   useEffect(() => {
     getUsers();
+    getTeams();
+    getDesignations();
   }, []);
 
   const handleEdit = (user) => {
@@ -77,8 +124,27 @@ const Users = () => {
     setShowDeleteDialog(true);
   };
 
-  const handleConfirmDelete = () => {
-    console.log(`Deleting user with id: ${deleteUser._id}`);
+  const handleConfirmDelete = async () => {
+    try {
+      const response = await fetch(
+        `${apiUrl}/api/v1/${role}/user/${deleteUser._id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            token: token,
+          },
+        }
+      );
+      const data = await response.json();
+      if (data.success) {
+        getUsers();
+      } else {
+        setError("Failed to fetch designations");
+      }
+    } catch (error) {
+      setError("Failed to fetch designations");
+    }
     setShowDeleteDialog(false);
     getUsers();
   };
@@ -90,26 +156,6 @@ const Users = () => {
   const handleCloseEditModal = () => {
     setShowEditModal(false);
     setSelectedUser(null);
-  };
-
-  const handleSaveEditedUser = async (updatedUserData) => {
-    const url = `${apiUrl}/api/v1/${role}/users/${updatedUserData._id}`;
-    const response = await fetch(url, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        token: token,
-      },
-      body: JSON.stringify(updatedUserData),
-    });
-
-    const data = await response.json();
-    if (data.success) {
-      getUsers();
-      setShowEditModal(false);
-    } else {
-      setError("Failed to update user");
-    }
   };
 
   const handleAddUser = () => {
@@ -144,7 +190,7 @@ const Users = () => {
           <Column field="email" header="Email" />
           <Column field="designationNames" header="Designations" />
           <Column field="teamNames" header="Teams" />
-          <Column field="permissions" header="Permissions" />
+          <Column field="permissionNames" header="Permissions" />
           <Column
             header="Actions"
             body={(rowData) => (
@@ -173,7 +219,7 @@ const Users = () => {
         <Button
           className="bg-darkBlue border-0 rounded-md"
           label="ADD USER"
-          onClick={handleAddUser} // Trigger the Add User modal
+          onClick={handleAddUser}
         />
       </div>
       {component}
@@ -181,9 +227,10 @@ const Users = () => {
         show={showEditModal}
         user={selectedUser}
         onClose={handleCloseEditModal}
-        saveUser={handleSaveEditedUser}
         availableDesignations={availableDesignations}
         availableTeams={availableTeams}
+        getUsers={getUsers}
+        setError={setError}
       />
       <ConfirmationDialog
         visible={showDeleteDialog}
