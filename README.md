@@ -36,6 +36,15 @@
     cd server
     npm install
 
+2.  **Run client and server:**
+
+    ```bash
+    # For client
+    npm run dev
+
+    # For server
+    npm start
+
 3.  **Access the application:**
 
     ```bash
