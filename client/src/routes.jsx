@@ -4,6 +4,7 @@ import UserDashboard from "./pages/user/UserDashboard";
 import Home from "./pages/Home";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import { loginLoader, verifyLoader } from "./loader/verify-loader";
+import Users from "./pages/admin/Users";
 
 const routes = createBrowserRouter([
   {
@@ -14,8 +15,8 @@ const routes = createBrowserRouter([
   {
     path: "/admin",
     loader: verifyLoader,
-    element: <Home />,
-    children: [{ path: "", element: <AdminDashboard /> }],
+    element: <AdminDashboard />,
+    children: [{ path: "users", element: <Users /> }],
   },
   {
     path: "/user",
