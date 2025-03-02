@@ -14,9 +14,9 @@ const registerUser = catchAsyncError(async (req, res, next) => {
     designations = [],
     teams = [],
   } = req.body;
-  const user = await userModel.findOne({ email, is_approved: 1, is_active: 1 });
+  const user = await userModel.findOne({ email, is_active: 1 });
   if (user) {
-    return next(new CustomHttpError(400, "User with this mail already exsts"));
+    return next(new CustomHttpError(400, "User with this mail already exists"));
   }
   if (!email || !fullname) {
     return next(new CustomHttpError(400, "Enter valid inputs"));

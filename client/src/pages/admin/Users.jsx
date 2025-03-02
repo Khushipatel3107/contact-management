@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
-import { ConfirmationDialog } from "../../components/admin/ConfirmationDialog";
-import EditUserModal from "../../components/admin/EditUserModal";
+import { ConfirmationDialog } from "../../components/ConfirmationDialog";
+import EditUserModal from "../../components/admin/users/EditUserModal";
+import { InputText } from "primereact/inputtext";
 const apiUrl = import.meta.env.VITE_API_URL;
 
 const Users = () => {
@@ -16,14 +17,13 @@ const Users = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [globalFilter, setGlobalFilter] = useState(null);
+  const [globalFilter, setGlobalFilter] = useState();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteUser, setDeleteUser] = useState(null);
   const [availableTeams, setAvailableTeams] = useState([]);
   const [availableDesignations, setAvailableDesignations] = useState([]);
 
-  // Function to fetch users
   const getUsers = async () => {
     const url = `${apiUrl}/api/v1/${role}/users`;
     setLoading(true);
@@ -211,15 +211,23 @@ const Users = () => {
         </DataTable>
       </div>
     );
-
   return (
     <div>
-      <div className="flex justify-between items-center mb-5">
-        <div className="text-4xl font-bold">Users</div>
-        <Button
-          className="bg-darkBlue border-0 rounded-md"
-          label="ADD USER"
-          onClick={handleAddUser}
+      <div className="my-6">
+        <div className="flex justify-between items-center mb-5">
+          <div className="text-4xl font-bold">Users</div>
+          <Button
+            className="bg-darkBlue border-0 rounded-md"
+            label="ADD USER"
+            onClick={handleAddUser}
+          />
+        </div>
+      </div>
+      <div className="p-field text-start my-4">
+        <InputText
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          placeholder="Search"
         />
       </div>
       {component}
@@ -230,9 +238,10 @@ const Users = () => {
         availableDesignations={availableDesignations}
         availableTeams={availableTeams}
         getUsers={getUsers}
-        setError={setError}
       />
       <ConfirmationDialog
+        message={"Are you sure you want to delete?"}
+        header={"Confirm deletion"}
         visible={showDeleteDialog}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}

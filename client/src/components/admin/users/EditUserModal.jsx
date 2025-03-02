@@ -14,6 +14,7 @@ const EditUserModal = ({
   availableTeams = [],
 }) => {
   const token = localStorage.getItem("token");
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     fullname: "",
     email: "",
@@ -22,8 +23,8 @@ const EditUserModal = ({
     permissions: [],
   });
   const [loading, setLoading] = useState(false);
-
   useEffect(() => {
+    setError("");
     if (user) {
       setFormData({
         fullname: user.fullname,
@@ -43,7 +44,7 @@ const EditUserModal = ({
         permissions: [],
       });
     }
-  }, [user]);
+  }, [user, show]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -99,6 +100,7 @@ const EditUserModal = ({
       if (data.success) {
         onClose();
         getUsers();
+        setError("");
       } else {
         setError(data.message || "Something went wrong");
       }
@@ -116,6 +118,7 @@ const EditUserModal = ({
       onHide={onClose}
       footer={
         <div className="space-x-5">
+          <div className="text-red-600 text-center w-full text-xl">{error}</div>
           <Button
             label="Cancel"
             icon="pi pi-times"

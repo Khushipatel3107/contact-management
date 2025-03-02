@@ -2,12 +2,19 @@ import React from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 
-export const ConfirmationDialog = ({ visible, onConfirm, onCancel }) => {
+export const ConfirmationDialog = ({
+  visible,
+  onConfirm,
+  onCancel,
+  message,
+  header,
+}) => {
   return (
     <Dialog
+      className="w-[30%]"
       visible={visible}
       onHide={onCancel}
-      header="Confirm Deletion"
+      header={header}
       footer={
         <div>
           <Button
@@ -25,7 +32,7 @@ export const ConfirmationDialog = ({ visible, onConfirm, onCancel }) => {
         </div>
       }
     >
-      <p>Are you sure you want to delete this user?</p>
+      <p>{message}</p>
     </Dialog>
   );
 };
