@@ -335,7 +335,7 @@ const editTeam = catchAsyncError(async (req, res, next) => {
 });
 
 const getTeams = catchAsyncError(async (req, res, next) => {
-  const teams = await teamModel.find({ is_active: 1 });
+  const teams = await teamModel.find({ is_active: 1 }).populate("members");
   res.status(200).json({ success: true, data: teams });
 });
 

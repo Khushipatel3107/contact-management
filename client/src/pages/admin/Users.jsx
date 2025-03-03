@@ -54,7 +54,9 @@ const Users = () => {
               : "-",
             permissions: ele.permissions || "-",
             permissionNames:
-              ele.permissions && Array.isArray(ele.permissions)
+              ele.permissions &&
+              Array.isArray(ele.permissions) &&
+              ele.permissions.length
                 ? Array.from(new Set(ele.permissions)).join(", ")
                 : "-",
           }))
