@@ -10,6 +10,13 @@ const router = express.Router();
 
 router.get("/verify", isAuthenticatedUser, authorizeRoles("admin"), verify);
 
+router.get(
+  "/counts",
+  isAuthenticatedUser,
+  authorizeRoles("admin"),
+  adminController.dashboardCounts
+);
+
 router.post(
   "/addUser",
   isAuthenticatedUser,
@@ -71,6 +78,16 @@ router
     isAuthenticatedUser,
     authorizeRoles("admin"),
     commonController.editContact
+  )
+  .get(
+    isAuthenticatedUser,
+    authorizeRoles("admin"),
+    commonController.getContacts
+  )
+  .delete(
+    isAuthenticatedUser,
+    authorizeRoles("admin"),
+    commonController.deleteContact
   );
 
 router

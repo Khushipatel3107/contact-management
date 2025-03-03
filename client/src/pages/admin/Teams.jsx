@@ -37,18 +37,6 @@ const Teams = () => {
       const data = await response.json();
       setLoading(false);
       if (data.success) {
-        console.log(
-          data.data.map((ele, index) => ({
-            ...ele,
-            index: index + 1,
-            permissionNames:
-              ele.permissions &&
-              Array.isArray(ele.permissions) &&
-              ele.permissions.length
-                ? Array.from(new Set(ele.permissions)).join(", ")
-                : "-",
-          }))
-        );
         setTeams(
           data.data.map((ele, index) => ({
             ...ele,
@@ -110,7 +98,7 @@ const Teams = () => {
         fetchTeams();
       }
     } catch (error) {
-      console.log(error);
+      setError(error.message || "Something went wrong");
     }
     setShowDeleteDialog(false);
   };

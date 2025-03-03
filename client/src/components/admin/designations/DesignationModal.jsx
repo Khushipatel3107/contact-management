@@ -41,7 +41,6 @@ const DesignationModal = ({ show, designation, onClose, getDesignations }) => {
     if (designation) {
       payload = { ...payload, designationId: designation._id };
     }
-    console.log(payload);
     const url = `${apiUrl}/api/v1/admin/designation`;
     try {
       setLoading(true);

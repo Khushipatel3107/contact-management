@@ -8,6 +8,7 @@ import Users from "./pages/admin/Users";
 import Designations from "./pages/admin/Designations";
 import Teams from "./pages/admin/Teams";
 import Contacts from "./pages/admin/Contacts";
+import AdminHome from "./pages/admin/AdminHome";
 
 const routes = createBrowserRouter([
   {
@@ -18,8 +19,9 @@ const routes = createBrowserRouter([
   {
     path: "/admin",
     loader: verifyLoader,
-    element: <AdminDashboard />,
+    element: <AdminHome />,
     children: [
+      { path: "", element: <AdminDashboard /> },
       { path: "users", element: <Users /> },
       { path: "designations", element: <Designations /> },
       { path: "teams", element: <Teams /> },

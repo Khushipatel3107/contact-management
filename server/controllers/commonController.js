@@ -91,7 +91,7 @@ const deleteContact = catchAsyncError(async (req, res, next) => {
     new CustomHttpError(401, "User does not have permission to delete contact");
   }
   contact.is_active = 0;
-  await contact.save({ validateBeforeSave: false });
+  await contact.save();
 
   res.status(200).json({
     success: true,

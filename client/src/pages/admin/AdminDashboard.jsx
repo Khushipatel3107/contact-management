@@ -1,58 +1,54 @@
-import React from "react";
-import { Link, Outlet } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import CountCard from "../../components/CountCard";
+import { ProgressSpinner } from "primereact/progressspinner";
+const apiUrl = import.meta.env.VITE_API_URL;
 
 const AdminDashboard = () => {
-  return (
-    <div className="flex h-screen">
-      <div className="w-64 bg-darkBlue text-white p-5">
-        <div className="text-center text-2xl font-semibold mb-6">
-          Admin Dashboard
-        </div>
-        <nav>
-          <ul className="space-y-4">
-            <li>
-              <Link
-                to="/admin/users"
-                className="hover:bg-gray-700 p-2 block rounded"
-              >
-                User
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="designations"
-                className="hover:bg-gray-700 p-2 block rounded"
-              >
-                Designations
-              </Link>
-            </li>
-            <li>
-              <Link to="teams" className="hover:bg-gray-700 p-2 block rounded">
-                Teams
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="contacts"
-                className="hover:bg-gray-700 p-2 block rounded"
-              >
-                Contacts
-              </Link>
-            </li>
-            <li>
-              <Link
-                onClick={() => localStorage.clear()}
-                className="hover:bg-gray-700 p-2 block rounded"
-              >
-                Logout
-              </Link>
-            </li>
-          </ul>
-        </nav>
-      </div>
+  const navigate = useNavigate();
+  const [data, setData] = useState({});
+  const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+  const [loading, setLoading] = useState(false);
 
-      <div className="flex-1 bg-gray-100 p-6">
-        <Outlet />
+  const getCounts = async () => {
+    const url = `${apiUrl}/api/v1/${role}/counts`;
+    setLoading(true);
+    try {
+      const request = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          token: token,
+        },
+      });
+      const response = await request.json();
+      setLoading(false);
+      if (response.success) {
+        setData(response.data);
+      } else {
+        navigate("/");
+      }
+    } catch (error) {
+      setLoading(false);
+      setError(error.message);
+    }
+  };
+
+  useEffect(() => {
+    getCounts();
+  }, []);
+  if (loading) {
+    return <ProgressSpinner />;
+  }
+  return (
+    <div className="flex my-11">
+      <div className="flex justify-center w-full flex-col">
+        <div className="grid grid-cols-2 gap-4 w-full h-full">
+          {Object.entries(data).map(([key, value]) => (
+            <CountCard label={key} count={value} key={key} />
+          ))}
+        </div>
       </div>
     </div>
   );

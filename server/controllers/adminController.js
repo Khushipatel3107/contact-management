@@ -3,6 +3,7 @@ const teamModel = require("../models/teams");
 const { CustomHttpError } = require("../utils/customError");
 const catchAsyncErrors = require("../middleware/catchAsyncError");
 const designationModel = require("../models/designations");
+const contactModel = require("../models/contacts");
 const { sendEmail } = require("../utils/sendMail");
 const catchAsyncError = require("../middleware/catchAsyncError");
 
@@ -339,6 +340,24 @@ const getTeams = catchAsyncError(async (req, res, next) => {
   res.status(200).json({ success: true, data: teams });
 });
 
+const dashboardCounts = catchAsyncError(async (req, res, next) => {
+  const teamsCount = await teamModel.countDocuments({ is_active: 1 });
+  const designationsCount = await designationModel.countDocuments({
+    is_active: 1,
+  });
+  const contactsCount = await contactModel.countDocuments({ is_active: 1 });
+  const usersCount = await userModel.countDocuments({ is_active: 1 });
+  res.status(200).json({
+    success: true,
+    data: {
+      teamsCount,
+      designationsCount,
+      contactsCount,
+      usersCount,
+    },
+  });
+});
+
 module.exports = {
   addDesignation,
   registerUser,
@@ -352,4 +371,5 @@ module.exports = {
   editTeam,
   getTeams,
   deleteUser,
+  dashboardCounts,
 };
