@@ -32,7 +32,7 @@ const addContact = catchAsyncError(async (req, res, next) => {
 
   const { name, email, contactNumber } = req.body;
 
-  const contact = await contactModel.find({ contactNumber });
+  const contact = await contactModel.find({ contactNumber, is_active: 1 });
   if (!contact) {
     return next(new CustomHttpError(401, "Contact already exists"));
   }
@@ -56,7 +56,11 @@ const editContact = catchAsyncError(async (req, res, next) => {
   const { name, email, contactNumber, contactId } = req.body;
   const contact = await contactModel.findById(contactId);
   if (!contact) {
-    new CustomHttpError(401, "Contact does not exists");
+    return next(new CustomHttpError(401, "Contact does not exists"));
+  }
+  const contactCheck = await contactModel.findOne({ contactNumber });
+  if (contactCheck) {
+    return next(new CustomHttpError(401, "This contact number already exists"));
   }
   contact.name = name;
   contact.email = email;

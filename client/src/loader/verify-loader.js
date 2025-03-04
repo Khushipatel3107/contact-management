@@ -14,6 +14,10 @@ export const loginLoader = async () => {
 export const verifyLoader = async () => {
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
+  const permissions = localStorage.getItem("permissions")?.split(",");
+  console.log(permissions);
+  console.log(!permissions);
+  console.log(role == "user" && !permissions);
   if (!token || !role) {
     return redirect("/");
   } else {
@@ -29,6 +33,9 @@ export const verifyLoader = async () => {
     if (response.success && response.data.role == role) {
       localStorage.setItem("fullname", response.data.fullname);
       localStorage.setItem("role", response.data.role);
+      if (role == "user") {
+        localStorage.setItem("permissions", response.data.permissions);
+      }
       return null;
     } else {
       localStorage.clear();

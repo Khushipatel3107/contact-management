@@ -5,7 +5,7 @@ const contactSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true },
     email: [{ type: String, trim: true }],
-    contactNumber: { type: Number, unique: true },
+    contactNumber: Number,
     is_active: { type: Number, default: 1 },
   },
   { timestamps: true }

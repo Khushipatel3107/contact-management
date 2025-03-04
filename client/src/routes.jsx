@@ -1,7 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import Login from "./pages/Login";
 import UserDashboard from "./pages/user/UserDashboard";
-import Home from "./pages/Home";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import { loginLoader, verifyLoader } from "./loader/verify-loader";
 import Users from "./pages/admin/Users";
@@ -9,6 +8,7 @@ import Designations from "./pages/admin/Designations";
 import Teams from "./pages/admin/Teams";
 import Contacts from "./pages/admin/Contacts";
 import AdminHome from "./pages/admin/AdminHome";
+import UserHome from "./pages/user/UserHome";
 
 const routes = createBrowserRouter([
   {
@@ -31,13 +31,13 @@ const routes = createBrowserRouter([
   {
     path: "/user",
     loader: verifyLoader,
-    element: <Home />,
+    element: <UserHome />,
     children: [{ path: "", element: <UserDashboard /> }],
   },
   {
     path: "*",
     loader: loginLoader,
-    element: <Home />,
+    element: <Login />,
   },
 ]);
 export default routes;

@@ -26,5 +26,10 @@ router
     isAuthenticatedUser,
     authorizeRoles("user"),
     commonController.deleteContact
+  )
+  .get(
+    isAuthenticatedUser,
+    authorizeRoles("user"),
+    commonController.getContacts
   );
 module.exports = router;
