@@ -33,7 +33,7 @@ const EditUserModal = ({
         designationIds: user.designations
           ? user.designations.map((designation) => designation._id)
           : [],
-        permissions: user.permissions || [],
+        permissions: [...new Set(user.permissions)] || [],
       });
     } else {
       setFormData({

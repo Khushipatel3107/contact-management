@@ -14,10 +14,6 @@ export const loginLoader = async () => {
 export const verifyLoader = async () => {
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
-  const permissions = localStorage.getItem("permissions")?.split(",");
-  console.log(permissions);
-  console.log(!permissions);
-  console.log(role == "user" && !permissions);
   if (!token || !role) {
     return redirect("/");
   } else {

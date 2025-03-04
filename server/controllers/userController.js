@@ -1,4 +1,5 @@
 const userModel = require("../models/users");
+const teamModel = require("../models/teams");
 const { CustomHttpError } = require("../utils/customError");
 const catchAsyncError = require("../middleware/catchAsyncError");
 const designationModel = require("../models/designations");
@@ -15,16 +16,17 @@ const completeSignup = catchAsyncError(async (req, res, next) => {
   }
   user.password = password;
   user.is_approved = 1;
-
-  let newPermissions = [];
-  for (const ele of user.designations) {
-    const role = await designationModel.findById(ele);
-    role.permissions.forEach((permission) => {
-      newPermissions.push(permission);
-    });
+  let allPermissions = [...user.permissions];
+  for (const designationId of user.designations) {
+    const role = await designationModel.findById(designationId);
+    allPermissions = allPermissions.concat(role.permissions);
+  }
+  for (const teamId of user.teams) {
+    const team = await teamModel.findById(teamId);
+    allPermissions = allPermissions.concat(team.permissions);
   }
 
-  newPermissions.forEach((permission) => {
+  allPermissions.forEach((permission) => {
     user.permissions.push(permission);
   });
 

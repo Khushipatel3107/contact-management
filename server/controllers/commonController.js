@@ -10,6 +10,14 @@ const login = catchAsyncError(async (req, res, next) => {
   if (!user) {
     return next(new CustomHttpError(400, "Invalid Credentials"));
   }
+  if (user.role == "user" && user.is_approved == 0) {
+    return next(
+      new CustomHttpError(
+        401,
+        "Complete you signup process then you can access resources"
+      )
+    );
+  }
   let isValidPassword = await user.comparePassword(password);
   if (!isValidPassword) {
     return next(new CustomHttpError(401, "Invalid Credentials"));
@@ -32,9 +40,21 @@ const addContact = catchAsyncError(async (req, res, next) => {
 
   const { name, email, contactNumber } = req.body;
 
-  const contact = await contactModel.find({ contactNumber, is_active: 1 });
-  if (!contact) {
-    return next(new CustomHttpError(401, "Contact already exists"));
+  let contact = await contactModel.findOne({ contactNumber });
+
+  if (contact) {
+    if (contact.is_active == 1) {
+      return next(new CustomHttpError(401, "Contact number already exists"));
+    } else {
+      contact.is_active = 1;
+      contact.name = name;
+      contact.email = email;
+      contact.contactNumber = contactNumber;
+      await contact.save();
+      res.status(200).json({
+        success: true,
+      });
+    }
   }
   const newContact = new contactModel({ name, email, contactNumber });
   await newContact.save();

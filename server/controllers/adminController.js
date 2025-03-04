@@ -15,9 +15,26 @@ const registerUser = catchAsyncError(async (req, res, next) => {
     designations = [],
     teams = [],
   } = req.body;
-  const user = await userModel.findOne({ email, is_active: 1 });
+  if (!permissions?.length) {
+    return next(new CustomHttpError(400, "Please provide permissions"));
+  }
+  const user = await userModel.findOne({ email });
   if (user) {
-    return next(new CustomHttpError(400, "User with this mail already exists"));
+    if (user.is_active === 1) {
+      return next(
+        new CustomHttpError(400, "User with this email already exists")
+      );
+    } else {
+      user.is_active = 1;
+      user.email = email;
+      user.fullname = fullname;
+      user.permissions = permissions;
+      user.teams = teams;
+      await user.save();
+      return res.status(200).json({
+        success: true,
+      });
+    }
   }
   if (!email || !fullname) {
     return next(new CustomHttpError(400, "Enter valid inputs"));
@@ -42,7 +59,7 @@ const registerUser = catchAsyncError(async (req, res, next) => {
     }
   }
   await newUser.save();
-  const link = `http://localhost:3000/setPassword?user=${newUser._id}`;
+  const link = `http://localhost:5173/setPassword?user=${newUser._id}`;
   const message = `Please set your password by clicking upon this link: \n\n ${link}`;
   await sendEmail({
     email,
@@ -74,6 +91,9 @@ const editUser = catchAsyncError(async (req, res, next) => {
   if (!designations?.length) {
     return next(new CustomHttpError(400, "Assign a designation to user"));
   }
+  if (!permissions?.length) {
+    return next(new CustomHttpError(400, "Please provide permissions"));
+  }
   const { userId } = req.params;
   const user = await userModel.findById(userId);
   if (!user) {
@@ -89,6 +109,10 @@ const editUser = catchAsyncError(async (req, res, next) => {
         }
       }
     }
+    team.members = team.members.filter(
+      (ele) => ele.toString() != user._id.toString()
+    );
+    await team.save();
   }
 
   for (const designationId of user?.designations) {
@@ -120,6 +144,8 @@ const editUser = catchAsyncError(async (req, res, next) => {
       for (const permission of team?.permissions) {
         user.permissions.push(permission);
       }
+      team.members.push(user._id);
+      await team.save();
     }
   }
   await user.save();
@@ -133,6 +159,13 @@ const deleteUser = catchAsyncError(async (req, res, next) => {
   let user = await userModel.findById(userId);
   if (!user) {
     return next(new CustomHttpError(400, "User does not exists"));
+  }
+  let teams = await teamModel.find({ members: user._id });
+  for (const team of teams) {
+    team.members = team.members.filter(
+      (ele) => ele.toString() != user._id.toString()
+    );
+    await team.save();
   }
   user.is_active = 0;
   await user.save();
@@ -148,11 +181,22 @@ const addDesignation = catchAsyncErrors(async (req, res, next) => {
     return next(new CustomHttpError(400, "Please write permissions"));
   }
   const existingDesignation = await designationModel.findOne({ name });
+
   if (existingDesignation) {
-    return next(
-      new CustomHttpError(400, "Designation with this name already exists")
-    );
+    if (existingDesignation.is_active === 1) {
+      return next(
+        new CustomHttpError(400, "Designation with this name already exists")
+      );
+    } else {
+      existingDesignation.is_active = 1;
+      existingDesignation.permissions = permissions;
+      await existingDesignation.save();
+      return res
+        .status(200)
+        .json({ success: true, message: "Designation reactivated" });
+    }
   }
+
   const des = new designationModel({ name, permissions });
   await des.save();
   res.status(200).json({
@@ -233,9 +277,29 @@ const getDesignations = catchAsyncError(async (req, res, next) => {
 
 const createTeam = catchAsyncError(async (req, res, next) => {
   const { name, members, permissions } = req.body;
-  const team = await teamModel.find({ name, is_active: 1 });
-  if (team.length) {
-    return next(new CustomHttpError(400, "Team already exists"));
+  const team = await teamModel.findOne({ name });
+  if (team) {
+    if (team.is_active == 1) {
+      return next(new CustomHttpError(400, "Team already exists"));
+    } else {
+      team.is_active = 1;
+      team.name = name;
+      team.members = members;
+      team.permissions = permissions;
+      for (const person of members) {
+        let user = await userModel.findById(person);
+        if (!user) {
+          return next(new CustomHttpError(400, "User does not exist"));
+        }
+        for (const permission of permissions) {
+          user.permissions.push(permission);
+        }
+        user.teams.push(team._id);
+        await user.save();
+      }
+      await team.save();
+      res.status(200).json({ success: true });
+    }
   }
   const newTeam = new teamModel({
     name,
@@ -283,6 +347,9 @@ const deleteTeam = catchAsyncError(async (req, res, next) => {
         user.permissions.splice(index, 1);
       }
     }
+    user.teams = user.teams.filter(
+      (ele) => ele.toString() !== team._id.toString()
+    );
     await user.save();
   }
   team.is_active = 0;
@@ -294,7 +361,7 @@ const deleteTeam = catchAsyncError(async (req, res, next) => {
 
 const editTeam = catchAsyncError(async (req, res, next) => {
   const { teamId, name, permissions, members } = req.body;
-  if (!name || !permissions?.length || !members?.length) {
+  if (!name) {
     return next(new CustomHttpError(400, "Please enter valid input"));
   }
   const users = await userModel.find({ teams: teamId });
