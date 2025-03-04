@@ -17,6 +17,7 @@ contactSchema.pre("save", async function (next) {
 
     const existingContact = await contactModel.findOne({
       email: { $in: this.email },
+      _id: { $ne: this._id },
     });
 
     if (existingContact) {

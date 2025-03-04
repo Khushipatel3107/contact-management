@@ -350,10 +350,10 @@ const dashboardCounts = catchAsyncError(async (req, res, next) => {
   res.status(200).json({
     success: true,
     data: {
-      teamsCount,
-      designationsCount,
-      contactsCount,
-      usersCount,
+      Teams: teamsCount,
+      Designations: designationsCount,
+      Contacts: contactsCount,
+      Users: usersCount,
     },
   });
 });

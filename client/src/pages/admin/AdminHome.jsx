@@ -1,9 +1,10 @@
 import React from "react";
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 const AdminHome = () => {
   const navigate = useNavigate();
-
+  const activeClass = "border border-1 p-2 block rounded";
+  const inactiveClass = "hover:bg-gray-700 p-2 block rounded";
   return (
     <div className="flex h-screen">
       <div className="w-64 bg-darkBlue text-white p-5">
@@ -11,46 +12,60 @@ const AdminHome = () => {
         <nav>
           <ul className="space-y-4">
             <li key="dashboard">
-              <Link to="/admin" className="hover:bg-gray-700 p-2 block rounded">
-                Dashboard
-              </Link>
+              <NavLink to="/admin">Dashboard</NavLink>
             </li>
             <li key="users">
-              <Link to="users" className="hover:bg-gray-700 p-2 block rounded">
+              <NavLink
+                to="users"
+                className={({ isActive }) => {
+                  return isActive ? activeClass : inactiveClass;
+                }}
+              >
                 User
-              </Link>
+              </NavLink>
             </li>
             <li key="designations">
-              <Link
+              <NavLink
                 to="designations"
-                className="hover:bg-gray-700 p-2 block rounded"
+                className={({ isActive }) => {
+                  return isActive ? activeClass : inactiveClass;
+                }}
               >
                 Designations
-              </Link>
+              </NavLink>
             </li>
             <li key="teams">
-              <Link to="teams" className="hover:bg-gray-700 p-2 block rounded">
+              <NavLink
+                to="teams"
+                className={({ isActive }) => {
+                  return isActive ? activeClass : inactiveClass;
+                }}
+              >
                 Teams
-              </Link>
+              </NavLink>
             </li>
             <li key="contacts">
-              <Link
+              <NavLink
                 to="contacts"
-                className="hover:bg-gray-700 p-2 block rounded"
+                className={({ isActive }) => {
+                  return isActive ? activeClass : inactiveClass;
+                }}
               >
                 Contacts
-              </Link>
+              </NavLink>
             </li>
             <li key="logout">
-              <Link
+              <NavLink
+                to={"/"}
                 onClick={() => {
                   localStorage.clear();
-                  navigate("/");
                 }}
-                className="hover:bg-gray-700 p-2 block rounded"
+                className={({ isActive }) => {
+                  return isActive ? activeClass : inactiveClass;
+                }}
               >
                 Logout
-              </Link>
+              </NavLink>
             </li>
           </ul>
         </nav>

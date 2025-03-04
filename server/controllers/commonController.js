@@ -58,7 +58,10 @@ const editContact = catchAsyncError(async (req, res, next) => {
   if (!contact) {
     return next(new CustomHttpError(401, "Contact does not exists"));
   }
-  const contactCheck = await contactModel.findOne({ contactNumber });
+  const contactCheck = await contactModel.findOne({
+    contactNumber,
+    _id: { $ne: contactId },
+  });
   if (contactCheck) {
     return next(new CustomHttpError(401, "This contact number already exists"));
   }

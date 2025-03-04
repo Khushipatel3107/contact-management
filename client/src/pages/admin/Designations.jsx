@@ -139,7 +139,7 @@ const Designations = () => {
               <div>
                 <Button
                   icon="pi pi-pencil"
-                  className="p-button-rounded p-button-info mr-2"
+                  className="p-button-rounded mr-2"
                   onClick={() => handleEdit(rowData)}
                 />
                 <Button
@@ -165,7 +165,7 @@ const Designations = () => {
           />
         </div>
       </div>
-      <div className="p-field text-start my-4">
+      <div className="text-start my-4">
         <InputText
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}

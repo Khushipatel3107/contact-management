@@ -10,24 +10,33 @@ const ContactModal = ({ show, contact, onClose, getContacts }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    email: [""],
     contactNumber: "",
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e, index = null) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    if (name == "email") {
+      let emails = formData.email;
+      emails[index] = value;
+      setFormData((prevData) => ({
+        ...prevData,
+        email: emails,
+      }));
+    } else {
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async () => {
     if (!formData.name) {
       setError("Enter name");
       return;
-    } else if (!formData.email) {
-      setError("Enter email");
+    } else if (formData.email.some((email) => email.trim() === "")) {
+      setError("Enter valid email it cannot be empty");
       return;
     } else if (!formData.contactNumber) {
       setError("Enter contact number");
@@ -71,6 +80,19 @@ const ContactModal = ({ show, contact, onClose, getContacts }) => {
     }
   };
 
+  const addEmailField = () => {
+    const emails = [...formData.email, ""];
+    setFormData((ele) => ({
+      ...ele,
+      email: emails,
+    }));
+  };
+  const removeEmailField = (index) => {
+    let emails = formData.email;
+    emails.filter((_, i) => i != index);
+    setFormData((prevData) => ({ ...prevData, emails }));
+  };
+
   useEffect(() => {
     setError("");
     if (contact) {
@@ -82,7 +104,7 @@ const ContactModal = ({ show, contact, onClose, getContacts }) => {
     } else {
       setFormData({
         name: "",
-        email: "",
+        email: [""],
         contactNumber: "",
       });
     }
@@ -128,15 +150,33 @@ const ContactModal = ({ show, contact, onClose, getContacts }) => {
         </div>
         <div className="p-field">
           <label htmlFor="email">Email</label>
-          <InputText
-            id="email"
-            className="w-full"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
+          {formData.email?.map((ele, index) => (
+            <div key={index} className="flex">
+              <InputText
+                key={index}
+                id={index}
+                className="w-full"
+                name="email"
+                value={ele}
+                onChange={(e) => handleChange(e, index)}
+                required
+              />
+              {index > 0 && (
+                <Button
+                  icon="pi pi-trash"
+                  className="p-button-danger p-button-rounded"
+                  onClick={() => removeEmailField(index)}
+                />
+              )}
+            </div>
+          ))}
         </div>
+        <Button
+          icon="pi pi-plus"
+          label="Add Email"
+          className="p-button-text mt-2"
+          onClick={addEmailField}
+        />
         <div className="p-field">
           <label htmlFor="contactNumber">Contact Number</label>
           <InputText

@@ -40,7 +40,7 @@ const Contacts = () => {
           response.data.map((ele, ind) => ({
             ...ele,
             index: ind + 1,
-            contactEmail: ele.email[0],
+            contactEmail: ele.email.join(", "),
           }))
         );
       } else {
