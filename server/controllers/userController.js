@@ -14,6 +14,9 @@ const completeSignup = catchAsyncError(async (req, res, next) => {
   if (!user) {
     return next(new CustomHttpError(400, "You cannot complete your profile"));
   }
+  if (user.is_active == 0) {
+    return next(new CustomHttpError(400, "User is inactive"));
+  }
   user.password = password;
   user.is_approved = 1;
   let allPermissions = [...user.permissions];

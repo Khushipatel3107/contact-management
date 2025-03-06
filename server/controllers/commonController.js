@@ -10,6 +10,9 @@ const login = catchAsyncError(async (req, res, next) => {
   if (!user) {
     return next(new CustomHttpError(400, "Invalid Credentials"));
   }
+  if (user?.is_active == 0) {
+    return next(new CustomHttpError(400, "User is not active"));
+  }
   if (user.role == "user" && user.is_approved == 0) {
     return next(
       new CustomHttpError(

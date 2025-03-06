@@ -9,12 +9,17 @@ import Teams from "./pages/admin/Teams";
 import Contacts from "./pages/admin/Contacts";
 import AdminHome from "./pages/admin/AdminHome";
 import UserHome from "./pages/user/UserHome";
+import CompleteSignup from "./pages/CompleteSignup";
 
 const routes = createBrowserRouter([
   {
     path: "/",
     loader: loginLoader,
     element: <Login />,
+  },
+  {
+    path: "/setPassword",
+    element: <CompleteSignup />,
   },
   {
     path: "/admin",
